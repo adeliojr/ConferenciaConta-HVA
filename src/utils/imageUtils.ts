@@ -5,8 +5,8 @@
  */
 export async function compressImageFile(
   file: File,
-  maxDimension = 1920,
-  quality = 0.85
+  maxDimension = 1200,
+  quality = 0.72
 ): Promise<string> {
   return new Promise((resolve, reject) => {
     const reader = new FileReader();
@@ -46,6 +46,8 @@ export async function compressImageFile(
         ctx.drawImage(img, 0, 0, width, height);
 
         const dataUrl = canvas.toDataURL('image/jpeg', quality);
+        const approxKb = Math.round((dataUrl.length * 3) / 4 / 1024);
+        console.log(`[HVA Foto] Redimensionada para ${width}x${height}px (~${approxKb} KB)`);
         resolve(dataUrl);
       };
       img.src = e.target?.result as string;

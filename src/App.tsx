@@ -92,9 +92,27 @@ export default function App() {
         }),
       });
 
-      const data = await res.json();
-      if (!res.ok || !data.success) {
-        throw new Error(data.message || 'Erro ao processar as fotos da ficha.');
+      let data: any = null;
+      const contentType = res.headers.get('content-type') || '';
+
+      if (contentType.includes('application/json')) {
+        data = await res.json();
+      } else {
+        const text = await res.text();
+        console.error('Resposta não-JSON recebida da API:', res.status, text.slice(0, 300));
+        if (res.status === 413) {
+          throw new Error('As fotos capturadas excederam o limite de tamanho do servidor. Tente tirar a foto um pouco mais de perto.');
+        } else if (res.status === 504 || res.status === 408) {
+          throw new Error('O servidor demorou para responder. Por favor, tente novamente em instantes.');
+        } else {
+          throw new Error(
+            'Não foi possível conectar ao serviço de IA. Se estiver na Vercel, certifique-se de adicionar a variável GEMINI_API_KEY em Project Settings > Environment Variables.'
+          );
+        }
+      }
+
+      if (!res.ok || !data?.success) {
+        throw new Error(data?.message || 'Erro ao processar as fotos da ficha.');
       }
 
       setTicketData(data.extractedData);
@@ -201,11 +219,16 @@ export default function App() {
 
   // Handler: Reset catalog to factory defaults
   const handleResetCatalog = async () => {
-    const res = await fetch('/api/prices/reset', { method: 'POST' });
-    const data = await res.json();
-    if (data.success && data.prices) {
-      setCatalog(data.prices);
-    } else {
+    try {
+      const res = await fetch('/api/prices?reset=true', { method: 'POST' });
+      const ct = res.headers.get('content-type') || '';
+      const data = ct.includes('application/json') ? await res.json() : null;
+      if (data && data.success && data.prices) {
+        setCatalog(data.prices);
+      } else {
+        setCatalog(DEFAULT_HVA_PRICES);
+      }
+    } catch {
       setCatalog(DEFAULT_HVA_PRICES);
     }
   };

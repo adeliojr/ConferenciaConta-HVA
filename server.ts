@@ -73,7 +73,7 @@ function saveStoredPrices(prices: PriceItem[]): void {
 const getGenAIClient = () => {
   const apiKey = process.env.GEMINI_API_KEY;
   if (!apiKey) {
-    throw new Error('GEMINI_API_KEY is not configured in environment.');
+    return null;
   }
   return new GoogleGenAI({
     apiKey,
@@ -200,13 +200,19 @@ app.post('/api/analyze-sheet', async (req: Request, res: Response) => {
     }
 
     if (imageParts.length === 0) {
-      return res.status(400).json({
+      return res.status(200).json({
         success: false,
         message: 'Nenhuma foto (frente, verso ou requisição laboratorial) foi enviada para análise.',
       });
     }
 
     const ai = getGenAIClient();
+    if (!ai) {
+      return res.status(200).json({
+        success: false,
+        message: 'Chave GEMINI_API_KEY não configurada. Por favor, adicione a variável de ambiente GEMINI_API_KEY no painel da Vercel (Project Settings > Environment Variables) para que a IA possa ler as fichas.',
+      });
+    }
 
     const systemPrompt = `Você é um auditor de faturamento veterinário do HOSPITAL VETERINÁRIO ARAÚJO (HVA) e do LABORATÓRIO CEAVET.
 Você está analisando foto(s) de atendimento veterinário, que podem incluir:
@@ -382,7 +388,7 @@ RESPONDA EXCLUSIVAMENTE COM UM OBJETO JSON VÁLIDO com a seguinte estrutura:
     });
   } catch (err: any) {
     console.error('Sheet analysis error:', err);
-    res.status(500).json({
+    res.status(200).json({
       success: false,
       message: err.message || 'Erro ao processar imagem da ficha com a IA.',
     });
