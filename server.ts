@@ -25,10 +25,16 @@ if (fs.existsSync(publicDir)) {
   app.use(express.static(publicDir));
 }
 
-// Ensure data directory exists for persistent prices
-const dataDir = path.resolve(__dirname, 'data');
+// Ensure data directory exists for persistent prices (use /tmp on Vercel serverless)
+const dataDir = process.env.VERCEL
+  ? path.resolve('/tmp', 'data')
+  : path.resolve(__dirname, 'data');
 if (!fs.existsSync(dataDir)) {
-  fs.mkdirSync(dataDir, { recursive: true });
+  try {
+    fs.mkdirSync(dataDir, { recursive: true });
+  } catch (e) {
+    console.warn('Could not create data dir:', e);
+  }
 }
 const pricesFilePath = path.join(dataDir, 'custom_prices.json');
 
@@ -407,4 +413,8 @@ async function startServer() {
   });
 }
 
-startServer();
+if (!process.env.VERCEL) {
+  startServer();
+}
+
+export default app;
