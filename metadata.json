@@ -1,0 +1,6 @@
+{
+  "name": "HVA - Conferência & Faturamento Veterinário",
+  "description": "Sistema de conferência de fichas de atendimento do Hospital Veterinário Araújo (HVA), com identificação de itens manuscritos por IA, tabela de preços administrável e relatório resumido com alerta de divergências.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
